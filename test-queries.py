@@ -25,12 +25,16 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+# Array to keep all failing queries to output to json
+errors = []
+
 # Helper function that checks expression against New Relic api
 def checkExpressions(tabs, expr):
+    query = expr['expr']
     getResult = requests.get(
         '%s/api/v1/query_range' % (args.endpoint),
         params = {
-            'query': expr['expr'],
+            'query': query,
             'start': math.floor(time.time()) - 300,
             'stop': math.floor(time.time()),
         },
@@ -38,10 +42,14 @@ def checkExpressions(tabs, expr):
     )
     data = json.loads(getResult.content)
     if data['status'] == 'success':
-        print(bcolors.OKGREEN + '%s  OK' % tabs + bcolors.ENDC + ' %s' % (expr['expr']))
+        print(bcolors.OKGREEN + '%s  OK' % tabs + bcolors.ENDC + ' %s' % (query))
     else:
-        print(bcolors.WARNING + '%s FAILED (%s) %s' % (tabs, data['status'], expr['expr']))
+        print(bcolors.WARNING + '%s FAILED (%s) %s' % (tabs, data['status'], query))
         print(data)
+        errors.append({
+            "query": query,
+            "return": data
+        })
 
 # Helper function that checks a panel and finds expressions, or other panels
 def checkPanels(panels, depth=0):
@@ -76,3 +84,7 @@ def parse(file):
 dashboards = os.listdir('output/dashboards')
 for file in dashboards:
 	parse(file)
+
+# Outpust errors to json
+with open('query-errors.json', 'w') as f:
+    f.write(json.dumps(errors, indent=4, sort_keys=True))
