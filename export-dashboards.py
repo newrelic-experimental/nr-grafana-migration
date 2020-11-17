@@ -49,6 +49,10 @@ with open('output/dashboards.csv', 'w') as f:
     # writing the data rows
     csvwriter.writerows(dashboardList)
 
+# Outpust list to json
+with open('output/dashboards.json', 'w') as f:
+    f.write(json.dumps(dashboardData, indent=4, sort_keys=True))
+
 # Loop dashboards and download the json
 print("Downloading JSON data for each dashboard")
 for dashboard in dashboardData:
