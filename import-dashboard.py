@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
-
 from python_graphql_client import GraphqlClient
 import json
+import argparse
+
+# Parse arguments
+parser = argparse.ArgumentParser(description='Convert Grafana dashboards to import into New Relic')
+parser.add_argument('dashboard', metavar='path', type=str, help='Grafana json file you want to convert to New Relic')
+parser.add_argument('-v', '--verbose', type=bool, action=argparse.BooleanOptionalAction, default=False, help='Run in verbose mode')
+args = parser.parse_args()
 
 # Read config file
 with open('config.json', 'r') as f:
@@ -11,7 +17,7 @@ apiAccountId = config['api']['accountId']
 apiToken = config['api']['token']
 
 # Read dashboard json file
-with open('export.json', 'r') as f:
+with open(args.dashboard, 'r') as f:
     dashboard = json.load(f)
 
 # Instantiate the client with an endpoint.

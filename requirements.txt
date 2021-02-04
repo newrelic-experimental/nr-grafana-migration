@@ -1,2 +1,3 @@
 python-graphql-client
 requests
+grafana_api

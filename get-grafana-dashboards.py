@@ -16,8 +16,8 @@ args = parser.parse_args()
 if not os.path.exists('output'):
     os.makedirs('output')
 
-if not os.path.exists('output/dashboards'):
-    os.makedirs('output/dashboards')
+if not os.path.exists('output/grafana'):
+    os.makedirs('output/grafana')
 
 # Initiase Grafana API
 print("Connecting to Grafana API")
@@ -58,7 +58,7 @@ print("Downloading JSON data for each dashboard")
 for dashboard in dashboardData:
     content = grafana_api.dashboard.get_dashboard(dashboard['uid'])
     # Write dashboard json to output directory
-    with open('output/dashboards/%s-%s.json' % (dashboard['uid'], dashboard['uri'].replace('db/', '')), 'w') as f:
+    with open('output/grafana/%s-%s.json' % (dashboard['uid'], dashboard['uri'].replace('db/', '')), 'w') as f:
         f.write(json.dumps(content, indent=4, sort_keys=True))
 
 # Helper to zip directory

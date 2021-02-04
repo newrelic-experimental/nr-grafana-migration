@@ -3,13 +3,20 @@ import argparse
 import json
 import math
 import requests
-
-verbose = True
+import os
 
 # Parse arguments
 parser = argparse.ArgumentParser(description='Convert Grafana dashboards to import into New Relic')
 parser.add_argument('dashboard', metavar='path', type=str, help='Grafana json file you want to convert to New Relic')
+parser.add_argument('-v', '--verbose', type=bool, action=argparse.BooleanOptionalAction, default=False, help='Run in verbose mode')
 args = parser.parse_args()
+
+# Create output directory if it doesn't exist
+if not os.path.exists('output'):
+    os.makedirs('output')
+
+if not os.path.exists('output/newrelic'):
+    os.makedirs('output/newrelic')
 
 # Read config file
 with open('config.json', 'r') as f:
@@ -35,6 +42,9 @@ login_response = session.post("https://login.newrelic.com/login", data = login_d
 # Read file
 with open(args.dashboard, 'r') as f:
     data = json.load(f)
+if args.verbose:
+    print("-------------------- Grafana JSON --------------------")
+    print(data)
 
 # Read out vars
 dashboardName = data['dashboard']['title']
@@ -57,7 +67,8 @@ def convertQuery(promql, range=True):
         "step": 30
     })
     data = nrql.json()
-    print(f'{promql} returned NRQL: {data}')
+    if args.verbose:
+        print(f'{promql} returned NRQL: {data}')
 
     return data['nrql']
 
@@ -154,6 +165,8 @@ def parsePanels(panels):
             convertPanel(panel)
 
 # Start converting process
+if args.verbose:
+    print("-------------------- Starting conversion --------------------")
 parsePanels(data['dashboard']['panels'])
 
 # Create dashboard in New Relic account
@@ -171,8 +184,13 @@ newrelic = {
 
 }
 
+# Create pretty json
 output = json.dumps(newrelic, indent=4, sort_keys=True)
-print(output)
-f = open("export.json", "w")
+if args.verbose:
+    print("-------------------- New Relic JSON --------------------")
+    print(output)
+
+# Write out file
+f = open("output/newrelic/newrelic-%s" % os.path.basename(args.dashboard), "w")
 f.write(output)
 f.close()
