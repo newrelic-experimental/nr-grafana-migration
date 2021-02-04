@@ -7,3 +7,6 @@ output/
 # Ignore custom vscode settings
 .vscode/settings.json
 query-errors.json
+
+# Config file
+config.json

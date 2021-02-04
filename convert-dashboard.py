@@ -2,73 +2,126 @@
 import argparse
 import json
 import math
+import requests
 
 verbose = True
 
 # Parse arguments
 parser = argparse.ArgumentParser(description='Convert Grafana dashboards to import into New Relic')
 parser.add_argument('dashboard', metavar='path', type=str, help='Grafana json file you want to convert to New Relic')
-parser.add_argument('--accountId', type=int, help='New Relic account id', required=True)
 args = parser.parse_args()
+
+# Read config file
+with open('config.json', 'r') as f:
+    config = json.load(f)
+
+apiUsername = config['auth']['username']
+apiPassword = config['auth']['password']
+apiAccountId = config['api']['accountId']
+apiToken = config['api']['token']
+
+# Login to New Relic
+session = requests.Session()
+session.hooks = {
+    'response': lambda r, *args, **kwargs: r.raise_for_status()
+}
+
+with open('config.json', 'r') as f:
+    config = json.load(f)
+
+login_data = {
+    "login[email]": apiUsername,
+    "login[password]": apiPassword
+}
+login_response = session.post("https://login.newrelic.com/login", data = login_data)
+
+custom_headers = {
+    "X-Requested-With": "XMLHttpRequest",
+    "Accept": "application/json"
+}
+
 
 # Read file
 with open(args.dashboard, 'r') as f:
     data = json.load(f)
-if verbose:
-    print(json.dumps(data, indent=4, sort_keys=True))
 
 # Read out vars
-accountId = args.accountId
 dashboardName = data['dashboard']['title']
+
+# Result widgets
+widgets = []
 
 # Helpers functions
 def convertQuery(promql):
-    # TODO: Insert magic converter
-    return promql
+    nrql = session.post("https://promql-gateway.service.newrelic.com/api/v1/translate", headers=custom_headers, json={
+        "promql": promql,
+        "account_id": apiAccountId,
+        "isRange": True,
+        "startTime": "null",
+        "endTime": "null",
+        "step": 30
+    })
+    data = nrql.json()
+    print(f'{promql} returned NRQL: {data}')
+
+    return data['nrql']
 
 def convertQueries(targets):
     queries = []
     for target in targets:
         if 'format' in target and target['format'] == 'time_series':
             queries.append({
-                "accountId": accountId,
-                "nrql": convertQuery(target['expr'])
+                "accountId": apiAccountId,
+                "query": convertQuery(target['expr'])
             })
 
-    return queries
+    if len(queries) == 0:
+        raise Exception('No queries found for {}'.format(targets))
 
+    return {
+        "nrqlQueries": queries
+    }
 
-# Read out Grafana panels and convert to New Relicwidgets
-widgets = []
-for panel in data['dashboard']['panels']:
+def convertPanel(panel):
     widgetTitle = panel['title']
     panelType = panel['type']
 
     # New Relic supported graph types
-    widgetTypeArea = None
-    widgetTypeLine = None
-    widgetTypeBar = None
-    widgetTypeBillboard = None
-    widgetTypePie = None
-    widgetTypeTable = None
-    widgetTypeMarkdown = None
+    visualisation = None
+    try:
+        rawConfiguration = convertQueries(panel['targets'])
 
-    if panelType == 'graph':
-        widgetTypeLine = {
-            "queries": convertQueries(panel['targets'])
+        if panelType == 'graph':
+            visualisation = "viz.line"
+        else:
+            # No idea what to do with this
+            raise Exception('Unknown type {}'.format(panel))
+
+    except Exception as err:
+        # Nullify all except Markdown to store error
+        visualisation = "viz.markdown"
+        rawConfiguration = {
+            "text": json.dumps({
+                "exception": type(err).__name__,
+                "arguments": err.args
+            })
         }
 
     # Coordinate conversion
     # Grafana has 24 column dashboards and New Relic has 12
     # We now devide by two and floor, but this will cause problems so a more complicate conversion method is needed
+    # One height in New Relic = 3 heights in Grafana (Visually estimated)
     panelColumn = math.floor(panel['gridPos']['x'] / 2)
     panelWidth = math.floor(panel['gridPos']['w'] / 2)
     panelRow = panel['gridPos']['y']
-    panelHeight = panel['gridPos']['h']
+    panelHeight = math.ceil(panel['gridPos']['h'] / 3)
 
     # Append widget to dashboard
     widgets.append({
-        "visualization": {},
+        "id": panel['id'],
+        "visualization": {
+            "id": visualisation,
+        },
         "layout": {
             "column": panelColumn,
             "row": panelRow,
@@ -76,24 +129,25 @@ for panel in data['dashboard']['panels']:
             "width": panelWidth
         },
         "title": widgetTitle,
-        "configuration": {
-            "area": widgetTypeArea,
-            "line": widgetTypeLine,
-            "bar": widgetTypeBar,
-            "billboard": widgetTypeBillboard,
-            "pie": widgetTypePie,
-            "table": widgetTypeTable,
-            "markdown": widgetTypeMarkdown
-        },
-        "rawConfiguration": {
-            "queries": convertQueries(panel['targets'])
-        },
+        "rawConfiguration": rawConfiguration
     })
 
-# Output New Relic dashboard
+# Loop panels, handy if we have panels in panels
+def parsePanels(panels):
+    for panel in panels:
+        if 'panels' in panel:
+            parsePanels(panel['panels'])
+        else:
+            convertPanel(panel)
+
+# Start converting process
+parsePanels(data['dashboard']['panels'])
+
+# Create dashboard in New Relic account
 newrelic = {
     "name": dashboardName,
     "description": "",
+    "permissions": "PUBLIC_READ_WRITE",
     "pages": [
         {
             "name": dashboardName,
@@ -104,4 +158,8 @@ newrelic = {
 
 }
 
-print(json.dumps(newrelic, indent=4, sort_keys=True))
+output = json.dumps(newrelic, indent=4, sort_keys=True)
+print(output)
+f = open("export.json", "w")
+f.write(output)
+f.close()

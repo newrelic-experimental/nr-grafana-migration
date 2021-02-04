@@ -1,0 +1,10 @@
+{
+    "auth": {
+        "username": "",
+        "password": ""
+    },
+    "api": {
+        "token": "",
+        "accountId":
+    }
+}
