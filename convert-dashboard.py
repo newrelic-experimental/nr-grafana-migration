@@ -43,7 +43,7 @@ dashboardName = data['dashboard']['title']
 widgets = []
 
 # Helpers functions
-def convertQuery(promql):
+def convertQuery(promql, range=True):
     custom_headers = {
         "X-Requested-With": "XMLHttpRequest",
         "Accept": "application/json"
@@ -51,7 +51,7 @@ def convertQuery(promql):
     nrql = session.post("https://promql-gateway.service.newrelic.com/api/v1/translate", headers=custom_headers, json={
         "promql": promql,
         "account_id": apiAccountId,
-        "isRange": True,
+        "isRange": range,
         "startTime": "null",
         "endTime": "null",
         "step": 30
@@ -61,13 +61,13 @@ def convertQuery(promql):
 
     return data['nrql']
 
-def convertQueries(targets):
+def convertQueries(targets, range=True):
     queries = []
     for target in targets:
         if 'format' in target and target['format'] == 'time_series':
             queries.append({
                 "accountId": apiAccountId,
-                "query": convertQuery(target['expr'])
+                "query": convertQuery(target['expr'], range=range)
             })
 
     if len(queries) == 0:
@@ -84,13 +84,19 @@ def convertPanel(panel):
     # New Relic supported graph types
     visualisation = None
     try:
-        rawConfiguration = convertQueries(panel['targets'])
-
+        # Detect visualisation
+        range = True
         if panelType == 'graph':
             visualisation = "viz.line"
+        elif panelType == 'singlestat':
+            visualisation = "viz.billboard"
+            range = False
         else:
             # No idea what to do with this
             raise Exception('Unknown type {}'.format(panel))
+
+        # Parse queries
+        rawConfiguration = convertQueries(panel['targets'], range=range)
 
     except Exception as err:
         # Nullify all except Markdown to store error
