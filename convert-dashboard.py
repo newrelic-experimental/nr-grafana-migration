@@ -86,17 +86,29 @@ def convertPanel(panel):
     try:
         # Detect visualisation
         range = True
+        limit = None
         if panelType == 'graph':
             visualisation = "viz.line"
         elif panelType == 'singlestat':
             visualisation = "viz.billboard"
             range = False
+        elif panelType == 'gauge':
+            visualisation = "viz.bullet"
+            range = False
+
+            if 'gauge' in panel and 'maxValue' in panel['gauge']:
+                limit = panel['gauge']['maxValue']
+
+            if 'fieldConfig' in panel and 'defaults' in panel['fieldConfig'] and 'max' in panel['fieldConfig']['defaults']:
+                limit = panel['fieldConfig']['defaults']['max']
         else:
             # No idea what to do with this
             raise Exception('Unknown type {}'.format(panel))
 
         # Parse queries
         rawConfiguration = convertQueries(panel['targets'], range=range)
+        if limit:
+            rawConfiguration['limit'] = limit
 
     except Exception as err:
         # Nullify all except Markdown to store error
