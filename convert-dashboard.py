@@ -26,20 +26,11 @@ session.hooks = {
     'response': lambda r, *args, **kwargs: r.raise_for_status()
 }
 
-with open('config.json', 'r') as f:
-    config = json.load(f)
-
 login_data = {
     "login[email]": apiUsername,
     "login[password]": apiPassword
 }
 login_response = session.post("https://login.newrelic.com/login", data = login_data)
-
-custom_headers = {
-    "X-Requested-With": "XMLHttpRequest",
-    "Accept": "application/json"
-}
-
 
 # Read file
 with open(args.dashboard, 'r') as f:
@@ -53,6 +44,10 @@ widgets = []
 
 # Helpers functions
 def convertQuery(promql):
+    custom_headers = {
+        "X-Requested-With": "XMLHttpRequest",
+        "Accept": "application/json"
+    }
     nrql = session.post("https://promql-gateway.service.newrelic.com/api/v1/translate", headers=custom_headers, json={
         "promql": promql,
         "account_id": apiAccountId,
@@ -111,9 +106,9 @@ def convertPanel(panel):
     # Grafana has 24 column dashboards and New Relic has 12
     # We now devide by two and floor, but this will cause problems so a more complicate conversion method is needed
     # One height in New Relic = 3 heights in Grafana (Visually estimated)
-    panelColumn = math.floor(panel['gridPos']['x'] / 2)
+    panelColumn = math.floor(panel['gridPos']['x'] / 2) + 1
     panelWidth = math.floor(panel['gridPos']['w'] / 2)
-    panelRow = panel['gridPos']['y'] + 1 # Grafana starts at 0, New Relic at 1
+    panelRow = math.floor(panel['gridPos']['y'] / 3) + 1 # Grafana starts at 0, New Relic at 1
     panelHeight = math.ceil(panel['gridPos']['h'] / 3)
 
     # Append widget to dashboard
