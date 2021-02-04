@@ -113,7 +113,7 @@ def convertPanel(panel):
     # One height in New Relic = 3 heights in Grafana (Visually estimated)
     panelColumn = math.floor(panel['gridPos']['x'] / 2)
     panelWidth = math.floor(panel['gridPos']['w'] / 2)
-    panelRow = panel['gridPos']['y']
+    panelRow = panel['gridPos']['y'] + 1 # Grafana starts at 0, New Relic at 1
     panelHeight = math.ceil(panel['gridPos']['h'] / 3)
 
     # Append widget to dashboard
