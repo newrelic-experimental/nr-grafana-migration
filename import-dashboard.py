@@ -6,7 +6,7 @@ import argparse
 # Parse arguments
 parser = argparse.ArgumentParser(description='Convert Grafana dashboards to import into New Relic')
 parser.add_argument('dashboard', metavar='path', type=str, help='Grafana json file you want to convert to New Relic')
-parser.add_argument('-v', '--verbose', type=bool, action=argparse.BooleanOptionalAction, default=False, help='Run in verbose mode')
+parser.add_argument('-v', '--verbose', action="store_true", help='Run in verbose mode')
 args = parser.parse_args()
 
 # Read config file
