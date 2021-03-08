@@ -8,7 +8,7 @@ import os
 # Parse arguments
 parser = argparse.ArgumentParser(description='Convert Grafana dashboards to import into New Relic')
 parser.add_argument('dashboard', metavar='path', type=str, help='Grafana json file you want to convert to New Relic')
-parser.add_argument('-v', '--verbose', type=bool, action=argparse.BooleanOptionalAction, default=False, help='Run in verbose mode')
+parser.add_argument('-v', '--verbose', action="store_true", help='Run in verbose mode')
 args = parser.parse_args()
 
 # Create output directory if it doesn't exist
@@ -49,8 +49,8 @@ if args.verbose:
 # Read out vars
 dashboardName = data['dashboard']['title']
 
-# Result widgets
-widgets = []
+# Result pages
+pages = list()
 
 # Helpers functions
 def convertQuery(promql, range=True):
@@ -112,6 +112,12 @@ def convertPanel(panel):
 
             if 'fieldConfig' in panel and 'defaults' in panel['fieldConfig'] and 'max' in panel['fieldConfig']['defaults']:
                 limit = panel['fieldConfig']['defaults']['max']
+            '''try: 
+                limit = panel['options']['fieldOptions']['defaults']['max']
+            except KeyError:
+                    # Don't catch exception here and throw error because limit is manadatory for bullet viz
+                    limit = panel['gauge']['maxValue']'''
+            
         else:
             # No idea what to do with this
             raise Exception('Unknown type {}'.format(panel))
@@ -141,7 +147,7 @@ def convertPanel(panel):
     panelHeight = math.ceil(panel['gridPos']['h'] / 2)
 
     # Append widget to dashboard
-    widgets.append({
+    widget = {
         "id": panel['id'],
         "visualization": {
             "id": visualisation,
@@ -154,15 +160,52 @@ def convertPanel(panel):
         },
         "title": widgetTitle,
         "rawConfiguration": rawConfiguration
-    })
+    }
 
-# Loop panels, handy if we have panels in panels
+    return widget
+
+# For collapse = true , you have to put row’s pannels inside the row definition , in panels[ ] section.
+# For collapse = false, you have to put row’s pannels below the row definition.
 def parsePanels(panels):
-    for panel in panels:
+    '''for panel in panels:
         if 'panels' in panel:
             parsePanels(panel['panels'])
         else:
-            convertPanel(panel)
+            convertPanel(panel)'''
+
+    page = { "name": "","description": "","widgets": []}
+    succesivePanels = False
+
+    for panel in panels:
+        if panel['type'] == 'row':
+            if succesivePanels:
+                pages.append(page)
+                succesivePanels = False
+                page = { "name": "","description": "","widgets": []}
+
+            page['name'] = panel['title']
+            if panel['collapsed']:
+                for nestedPanel in panel['panels']:
+                    page['widgets'].append(convertPanel(nestedPanel))
+                pages.append(page)
+                page = { "name": "","description": "","widgets": []}
+            else:
+                succesivePanels = True
+        else:
+            page['widgets'].append(convertPanel(panel))
+            
+    ## Edge cases ##
+    # If last row is not collapsed don't forget to add last row's panels
+    if succesivePanels:
+        pages.append(page)
+    # Don't forget to add any panel that don't belong to a row at the end of Grafana dashboard to the last NR page
+    elif page['widgets']:
+        if pages:
+            pages[-1]['widgets'].extend(page['widgets'])
+        ## in case no rows in the grafana dashboard
+        else:
+            pages.append({ "name": dashboardName,"description": "","widgets": page['widgets']})
+
 
 # Start converting process
 if args.verbose:
@@ -174,14 +217,7 @@ newrelic = {
     "name": dashboardName,
     "description": "",
     "permissions": "PUBLIC_READ_WRITE",
-    "pages": [
-        {
-            "name": dashboardName,
-            "description": "",
-            "widgets": widgets,
-        }
-    ],
-
+    "pages": pages,
 }
 
 # Create pretty json
