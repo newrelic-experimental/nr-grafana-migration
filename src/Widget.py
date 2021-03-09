@@ -47,7 +47,8 @@ class Widget:
                 except KeyError:
                         # Don't catch exception here and throw error because limit is manadatory for bullet viz
                         limit = panel['gauge']['maxValue']'''
-
+            elif self.panelType == 'table':
+                self.visualisation = "viz.table"
             else:
                 # No idea what to do with this
                 raise Exception('Unknown type {}'.format(widget))
