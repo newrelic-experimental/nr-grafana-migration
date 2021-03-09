@@ -37,11 +37,11 @@ class Widget:
                 self.visualisation = "viz.bullet"
                 range = False
 
-                if 'gauge' in self.raw and 'maxValue' in self.raw['gauge']:
-                    limit = self.raw['gauge']['maxValue']
+                if 'gauge' in widget and 'maxValue' in widget['gauge']:
+                    limit = widget['gauge']['maxValue']
 
-                if 'fieldConfig' in self.raw and 'defaults' in self.raw['fieldConfig'] and 'max' in self.raw['fieldConfig']['defaults']:
-                    limit = self.raw['fieldConfig']['defaults']['max']
+                if 'fieldConfig' in widget and 'defaults' in widget['fieldConfig'] and 'max' in widget['fieldConfig']['defaults']:
+                    limit = widget['fieldConfig']['defaults']['max']
                 '''try:
                     limit = panel['options']['fieldOptions']['defaults']['max']
                 except KeyError:
@@ -50,7 +50,7 @@ class Widget:
 
             else:
                 # No idea what to do with this
-                raise Exception('Unknown type {}'.format(self.raw))
+                raise Exception('Unknown type {}'.format(widget))
 
             # Parse queries
             self.rawConfiguration = {}
