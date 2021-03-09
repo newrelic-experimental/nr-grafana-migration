@@ -1,8 +1,9 @@
 # Ignore created zip file
 newrelic.zip
 
-# Ignore output directory
+# Ignore output directory and compiled files
 output/
+*.pyc
 
 # Ignore custom vscode settings
 .vscode/settings.json
