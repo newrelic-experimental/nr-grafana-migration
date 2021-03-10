@@ -19,7 +19,7 @@ class Dashboard:
     # For collapse = true , you have to put row’s pannels inside the row definition , in panels[ ] section.
     # For collapse = false, you have to put row’s pannels below the row definition.
     def parsePanels(self, panels):
-        page = Page(conversionService=self.conversionService)
+        page = Page(conversionService=self.conversionService, widgets=[])
         succesivePanels = False
 
         for panel in panels:
@@ -27,14 +27,14 @@ class Dashboard:
                 if succesivePanels:
                     self.pages.append(page)
                     succesivePanels = False
-                    page = Page(conversionService=self.conversionService)
+                    page = Page(conversionService=self.conversionService, widgets=[])
 
                 page.name = panel['title']
                 if panel['collapsed']:
                     for nestedPanel in panel['panels']:
                         page.addWidget(nestedPanel)
                     self.pages.append(page)
-                    page = Page(conversionService=self.conversionService)
+                    page = Page(conversionService=self.conversionService, widgets=[])
                 else:
                     succesivePanels = True
             else:

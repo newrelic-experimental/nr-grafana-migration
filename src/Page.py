@@ -1,9 +1,4 @@
-
-
-
-
 from src.Widget import Widget
-
 
 class Page:
 
