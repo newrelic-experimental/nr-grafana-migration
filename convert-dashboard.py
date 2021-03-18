@@ -51,3 +51,6 @@ if args.verbose:
 f = open("output/newrelic/newrelic-%s" % os.path.basename(args.dashboard), "w")
 f.write(output)
 f.close()
+
+# Close query cache
+promQL2NrqlService.saveCache()
