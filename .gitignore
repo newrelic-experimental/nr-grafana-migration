@@ -11,3 +11,6 @@ query-errors.json
 
 # Config file
 config.json
+
+# Query cache file
+cache.json
