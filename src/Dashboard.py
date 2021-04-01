@@ -1,6 +1,5 @@
 from src.Page import Page
 
-
 class Dashboard:
 
     def __init__(self, conversionService, json):
@@ -60,3 +59,12 @@ class Dashboard:
             "permissions": "PUBLIC_READ_WRITE",
             "pages": list(map(lambda page: page.toJSON(), self.pages)),
         }
+    
+    @staticmethod
+    def getVariables(json):
+        variables = list()
+        if 'templating' in json['dashboard'] and 'list' in json['dashboard']['templating']:
+            variablesList = json['dashboard']['templating']['list']
+            for variableObj in variablesList:
+                variables.append(f'${variableObj["name"]}')
+        return variables
