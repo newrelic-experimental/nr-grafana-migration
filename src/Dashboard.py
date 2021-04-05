@@ -29,7 +29,7 @@ class Dashboard:
                     page = Page(conversionService=self.conversionService, widgets=[])
 
                 page.name = panel['title']
-                if panel['collapsed']:
+                if 'collapsed' in panel and panel['collapsed']:
                     for nestedPanel in panel['panels']:
                         page.addWidget(nestedPanel)
                     self.pages.append(page)
