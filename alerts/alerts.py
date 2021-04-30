@@ -100,12 +100,10 @@ def processAlert(alert):
                 {
                     "priority": severity,
                     # Value that triggers a violation
-                    # TODO: Replace with correct value
                     "threshold": threshold,
                     "thresholdDuration": timerange,
                     # Operator on the value
-                    # TODO: Replace with correct value
-                    "operator": "ABOVE", # Options: ABOVE | BELOW | EQUALS
+                    "operator": operator, # Options: ABOVE | BELOW | EQUALS
                     # How many data points must be in violation for the duration
                     "thresholdOccurrences": "ALL", # Options ALL | AT_LEAST_ONCE
                 }
@@ -113,32 +111,12 @@ def processAlert(alert):
             # Loss of Signal Settings
             "expiration": {
                 # Close open violations if signal is lost (Default: false)
-                # TODO: Replace with correct value
-                "closeViolationsOnExpiration": "replaceMe", # Options true | false
+                "closeViolationsOnExpiration": True, # Options true | false
                 # Open "Loss of Signal" violation if signal is lost (Default: false)
-                # TODO: Replace with correct value
                 "openViolationOnExpiration": absent, # Options true | false
                 # Time in seconds; Max value: 172800 (48hrs), null if closeViolationsOnExpiration and openViolationOnExpiration are both 'false'
-                # TODO: Replace with correct value
-                "expirationDuration": 0,
-            },
-
-            # Advanced Signal Settings
-            "signal": {
-                # Duration of the time window used to evaluate the NRQL Condition
-                # Time in seconds; 30 - 900 (Default: 60)
-                # TODO: Replace with correct value
-                "aggregationWindow": 0,
-                # The number of windows we look back at the aggregated data
-                # Max 20 minutes, multiple of aggregationWindow
-                # TODO: Replace with correct value
-                "evaluationOffset": 0,
-                # Type of value that should be used to fill gaps
-                # TODO: Replace with correct value
-                "fillOption": "replaceMe", # Options LAST_VALUE | NONE | STATIC
-                # Integer; Used in conjunction with STATIC fillOption, otherwise null
-                # TODO: Replace with correct value
-                "fillValue": 0,
+                # Default to one day
+                "expirationDuration": 86400,
             },
             "runbookUrl": runbook_url
         }, yamlfile, default_flow_style=False, width=1000)
