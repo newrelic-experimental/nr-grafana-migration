@@ -25,11 +25,6 @@ def processAlert(alert):
         if 'runbook_url' in alert['annotations']:
             runbook_url = alert['annotations']['runbook_url']
 
-    # Parsing expression
-    # Problems
-    # - The threshold we need for New Relic is contained in the PromQL query, usually in form of >, >=, ==, <, <=
-    # - Function absent needs to be converted to loss of Signal Settings in New Relic
-
     # Detect absent and parse out query
     absent = False
     match = re.search(r'^absent\((.*)\)$', expr)
@@ -37,9 +32,54 @@ def processAlert(alert):
         absent = True
         expr = match.group(1)
 
+    # Split expression
+    match = re.search(r'^(.*)(==|>|<|<=|>=|!=)(.*)$', expr)
+    if match is None:
+        print("Error parsing expression, can't find operator %s", expr)
+        return
+    left = match.group(1).strip()
+    operator = match.group(2).strip()
+    right = match.group(3).strip()
 
-    print("%s" % expr)
+    # Convert operator to New Relic format
+    if operator == "==":
+        operator = "EQUALS"
+    elif operator == ">":
+        operator = "ABOVE"
+    elif operator == "<":
+        operator = "BELOW"
+    else:
+        print("Error parsing expression, unsupported operator %s", expr)
+        return
 
+    # Figure out which is the treshold and which is the query
+    # if both are queries fail
+    # We do this by checking if it's only numbers and aritmatic expressions
+    reNumber = r'^([0-9. *+-/])*$'
+    isLeftThreshold = False
+    isRightThreshold = False
+    match = re.search(reNumber, left)
+    if match:
+        isLeftThreshold = True
+        threshold = eval(match.group(1))
+
+    match = re.search(reNumber, right)
+    if match:
+        isRightThreshold = True
+        threshold = eval(match.group(1))
+
+    if not isLeftThreshold and not isRightThreshold:
+        print("Error parsing expression, no threshold found (maybe multi query): %s", expr)
+        return
+
+    # Set the query to the not threshold side
+    if isLeftThreshold:
+        expr = right
+
+    if isRightThreshold:
+        expr = left
+
+    # Write out alert
     with open("output/%s.yml" % name, 'w') as yamlfile:
         # This is the New Relic alerts format
         yaml.dump({
@@ -61,7 +101,7 @@ def processAlert(alert):
                     "priority": severity,
                     # Value that triggers a violation
                     # TODO: Replace with correct value
-                    "threshold": 0,
+                    "threshold": threshold,
                     "thresholdDuration": timerange,
                     # Operator on the value
                     # TODO: Replace with correct value
