@@ -3,6 +3,7 @@
 import yaml
 import sys
 import os
+import re
 
 # Create output directory if it doesn't exist
 if not os.path.exists('output'):
@@ -24,11 +25,20 @@ def processAlert(alert):
         if 'runbook_url' in alert['annotations']:
             runbook_url = alert['annotations']['runbook_url']
 
-    print("{%s}" % expr)
     # Parsing expression
     # Problems
     # - The threshold we need for New Relic is contained in the PromQL query, usually in form of >, >=, ==, <, <=
     # - Function absent needs to be converted to loss of Signal Settings in New Relic
+
+    # Detect absent and parse out query
+    absent = False
+    match = re.search(r'^absent\((.*)\)$', expr)
+    if match:
+        absent = True
+        expr = match.group(1)
+
+
+    print("%s" % expr)
 
     with open("output/%s.yml" % name, 'w') as yamlfile:
         # This is the New Relic alerts format
@@ -67,7 +77,7 @@ def processAlert(alert):
                 "closeViolationsOnExpiration": "replaceMe", # Options true | false
                 # Open "Loss of Signal" violation if signal is lost (Default: false)
                 # TODO: Replace with correct value
-                "openViolationOnExpiration": True, # Options true | false
+                "openViolationOnExpiration": absent, # Options true | false
                 # Time in seconds; Max value: 172800 (48hrs), null if closeViolationsOnExpiration and openViolationOnExpiration are both 'false'
                 # TODO: Replace with correct value
                 "expirationDuration": 0,
