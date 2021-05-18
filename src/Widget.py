@@ -42,22 +42,28 @@ class Widget:
 
                 if 'fieldConfig' in widget and 'defaults' in widget['fieldConfig'] and 'max' in widget['fieldConfig']['defaults']:
                     limit = widget['fieldConfig']['defaults']['max']
-                '''try:
-                    limit = panel['options']['fieldOptions']['defaults']['max']
-                except KeyError:
-                        # Don't catch exception here and throw error because limit is manadatory for bullet viz
-                        limit = panel['gauge']['maxValue']'''
+
+                if 'options' in widget and 'fieldOptions' in widget['options'] and 'defaults' in widget['options']['fieldOptions'] and 'max' in widget['options']['fieldOptions']['defaults']:
+                    limit = widget['options']['fieldOptions']['defaults']['max']
+
             elif self.panelType == 'table':
                 self.visualisation = "viz.table"
+            elif self.panelType == 'text':
+                self.visualisation = "viz.markdown"
             else:
                 # No idea what to do with this
                 raise Exception('Unknown type {}'.format(widget))
 
             # Parse queries
             self.rawConfiguration = {}
-            self.rawConfiguration = self.convertQueries(widget['targets'], range=range)
-            if limit:
-                self.rawConfiguration['limit'] = limit
+            if self.panelType == 'text':
+                self.rawConfiguration = {
+                    "text": widget['content']
+                }
+            else:
+                self.rawConfiguration = self.convertQueries(widget['targets'], range=range)
+                if limit:
+                    self.rawConfiguration['limit'] = limit
 
         except Exception as err:
             # Nullify all except Markdown to store error
@@ -72,7 +78,8 @@ class Widget:
     def convertQueries(self, targets, range=True):
         queries = []
         for target in targets:
-            if 'format' in target and target['format'] == 'time_series':
+            #if 'format' in target and target['format'] == 'time_series':
+            if 'expr' in target:
                 queries.append({
                     "accountId": self.conversionService.accountId,
                     "query": self.conversionService.convertQuery(target['expr'], range=range)

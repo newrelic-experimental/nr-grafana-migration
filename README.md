@@ -1,46 +1,50 @@
-# New Relic Migration tools for Grafana
+[![New Relic Experimental header](https://github.com/newrelic/opensource-website/raw/master/src/images/categories/Experimental.png)](https://opensource.newrelic.com/oss-category/#new-relic-experimental)
 
-## Requirements
+# New Relic Migration tool for Grafana
+
+## Installation
+
+### Requirements
 
 - Python v3 & pip3
 - `pip3 install -r requirements.txt`
 
-## Configuration
+## Getting Started
 
-To use these tools you need to copy `config.json.example` to `config.json` and enter the account details:
+`python3 main.py`
 
-```
-"auth": {
-        "username": "[ YOUR NEW RELIC USERNAME ]",
-        "password": "[ YOUR NEW RELIC PASSWORD ]"
-},
-"api": {
-    "token": "[ USER API TOKEN ]",
-    "accountId": "[ ACCOUNT ID WHERE YOU WANT TO IMPORT THE DASHBOARDS ]"
-}
-```
+## Usage
 
-## Scripts
+### Configuration Details
+The tool will guide you through the needed configuration information.
+The configuration will be requested only the first time you run the script. Future executions will use the `config.json` generated during the first execution. You can update this config file at any time if needed.
 
-### Grafana dashboard export tool
+A `cache.json` will be generated as well where you can see the translated queries. This file is used to speed up the process in case of redundant queries in your dashboards.
 
-To export a list of all your Grafana dashboards including the JSON structure you can use `get-grafana-dashboards.py`. The script will create a zipfile called `newrelic.zip` which you can share with your New Relic account team.
+Authentication is required as part of the configuration. Why?  because this tool is using an API that is not exposed via NR GraphQL schema.
+- For SSO authenticated users: we will collect New Relic browser cookie and use it for authentication.
+- For Non SSO users: you will be required to enter your username and password.
 
-To run `get-grafana-dashboards.py` you need to pass the following parameters:
+The script will guide you through the needed configuration for each case.
 
-* `--host`: Host and port of your Grafana instance, for example `grafana-dns:3000`
-* `--token`: API Token used to authenticate with Grafana API, for more information check out Grafana docs: https://grafana.com/docs/grafana/latest/http_api/auth/#create-api-token
+For New Relic, make sure to use a user API key. [Create one if needed](https://docs.newrelic.com/docs/apis/get-started/intro-apis/new-relic-api-keys/#user-key-create).
 
-The content of the zip files matches what's in the `output` directory.
+For Grafana, make sure you have an API key (you may need to be an admin in order to [generate one](https://grafana.com/docs/grafana-cloud/cloud-portal/create-api-key/)).
 
-### Grafana dashboard conversion tool
+## Troubleshooting
 
-To convert a Grafana dashboard to New Relic you can use `convert-dashboard.py`. The script will take a path to a Grafana dashboard json and create a file with same name in `output/newrelic`.
+Check the output folder to see the Grafana and New Relic dashbaords JSON files.
+You can also check the list of migrated dashboards in `dashboards.csv` and `dashboards.json`.
 
-Use the following command to convert a dashboard from Grafana to New Relic: `./convert-dashboard.py output/grafana/[DASHBOARD NAME].json`.
+## Contributing
+We encourage your contributions to improve New Relic Migration tool for Grafana! Keep in mind when you submit your pull request, you'll need to sign the CLA via the click-through using CLA-Assistant. You only have to sign the CLA one time per project.
+If you have any questions, or to execute our corporate CLA, required if your contribution is on behalf of a company,  please drop us an email at opensource@newrelic.com.
 
-## New Relic import dashboard tool
+**A note about vulnerabilities**
 
-To import a New Relic dashboard you can use `import-dashboard.py`. The script will take a path to a New Relic dashboard json and import it into the account defined in `config.json`.
+As noted in our [security policy](../../security/policy), New Relic is committed to the privacy and security of our customers and their data. We believe that providing coordinated disclosure by security researchers and engaging with the security community are important means to achieve our security goals.
 
-Use the following command to import a New Relic dashboard JSON in New Relic: `./import-dashboard.py output/newrelic/[DASHBOARD NAME].json`.
+If you believe you have found a security vulnerability in this project or any of New Relic's products or websites, we welcome and greatly appreciate you reporting it to New Relic through [HackerOne](https://hackerone.com/newrelic).
+
+## License
+New Relic Migration tool for Grafana is licensed under the [Apache 2.0](http://apache.org/licenses/LICENSE-2.0.txt) License.
