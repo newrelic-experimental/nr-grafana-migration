@@ -9,9 +9,10 @@ import re
 if not os.path.exists('output'):
     os.makedirs('output')
 
+# Process a single alert, and create a file containing everything needed to pass it along to the NR API
 def processAlert(alert):
-    name = alert['alert']
-    expr = alert['expr'].replace('\n', '')
+    name = alert['alert'] if 'alert' in alert else alert['name']
+    expr = alert['expr'].replace('\n', '') if 'expr' in alert else alert['query'].replace('\n', '')
     severity = 'critical'.upper()
     timerange = alert['for'] if 'for' in alert else 5
     message = ""
@@ -19,11 +20,15 @@ def processAlert(alert):
     if 'labels' in alert:
         if 'severity' in alert['labels']:
             severity = alert['labels']['severity']
+    if 'severity' in alert:
+        severity = alert['severity']
     if 'annotations' in alert:
         if 'message' in alert['annotations']:
             message = alert['annotations']['message']
         if 'runbook_url' in alert['annotations']:
             runbook_url = alert['annotations']['runbook_url']
+    if 'description' in alert:
+        message = alert['description']
 
     # Detect absent and parse out query
     absent = False
@@ -122,18 +127,41 @@ def processAlert(alert):
         }, yamlfile, default_flow_style=False, width=1000)
 
 
+# Check if an alert is set, and if so process it
 def processRule(rule):
-    if 'alert' in rule:
+    if 'alert' in rule or 'name' in rule:
         processAlert(rule)
 
+# Loop through rules in a group
 def processGroup(group):
-    for rule in group['rules']:
-        processRule(rule)
+    if 'rules' in group and type(group['rules']) is list:
+        for rule in group['rules']:
+            processRule(rule)
 
-with open('examples/prometheus-rules.yaml') as file:
+# Try to open the first argument, which should be the alert file
+if len(sys.argv) < 2:
+    print("Please supply an alert file as the first argument")
+    sys.exit(1)
+
+with open(sys.argv[1]) as file:
     # The FullLoader parameter handles the conversion from YAML
     # scalar values to Python the dictionary format
     prometheusRule = yaml.load(file, Loader=yaml.FullLoader)
 
-for group in prometheusRule['spec']['groups']:
-    processGroup(group)
+# Detect what kind of file it is and process
+# Kubernetes
+if 'spec' in prometheusRule:
+    for group in prometheusRule['spec']['groups']:
+        processGroup(group)
+# Groups
+elif 'groups' in prometheusRule:
+    for group in prometheusRule['groups']:
+        for service in group['services']:
+            for exporter in service['exporters']:
+                processGroup(exporter)
+# Error out
+else:
+    print("Error, can't find any alerts")
+    sys.exit(1)
+
+
