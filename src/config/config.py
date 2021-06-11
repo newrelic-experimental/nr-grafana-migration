@@ -4,7 +4,7 @@ from pathlib import Path
 from src.utils.utils import isNumber
 import src.utils.constants as constants
 
-def createConfigFile(ConfigFileName):
+def createConfigFile(ConfigFileName, grafana):
     config = {
         "auth": {
             "ssoEnabled": False,
@@ -25,7 +25,7 @@ def createConfigFile(ConfigFileName):
             "host": ""
         }
     }
-    
+
     print("")
     questionary.print("Let's get some information about New Relic (destination) 🔑", style="bold italic fg:darkred")
     ssoEnabled = questionary.confirm("Do you use SSO to login to New Relic?").ask()
@@ -41,10 +41,11 @@ def createConfigFile(ConfigFileName):
     userKey = questionary.text("Please enter your user API key (aka GraphQL API Key)").ask()
     accountId = questionary.text("Please enter your New Relic account Id", validate=isNumber).ask()
 
-    print("")
-    questionary.print("Let's get some information about Grafana (source) 🔑", style="bold italic fg:darkred")
-    host = questionary.text("Please enter your Grafana host name (for example: 'myAccount.grafana.net')").ask()
-    apiKey = questionary.text("Please enter your Grafana API Key").ask()
+    if grafana:
+        print("")
+        questionary.print("Let's get some information about Grafana (source) 🔑", style="bold italic fg:darkred")
+        host = questionary.text("Please enter your Grafana host name (for example: 'myAccount.grafana.net')").ask()
+        apiKey = questionary.text("Please enter your Grafana API Key").ask()
 
     config['auth']['ssoEnabled'] = ssoEnabled
     config['api']['userKey'] = userKey
@@ -55,22 +56,22 @@ def createConfigFile(ConfigFileName):
     data = json.dumps(config)
     with open(ConfigFileName,"w") as f:
         f.write(data)
-    
+
     print("")
     questionary.print("We created your configuration file based on your entries, please update the file if needed. We will use this file if you execute this script again!")
 
 
-def config():
+def config(grafana=False):
     configFileName = constants.CONFIG_FILE_NAME
     configFile = Path(configFileName)
     if configFile.is_file():
         # file exists
         print("We found a configuration file! We will use that file!")
         print('\n')
-    else: 
-        # file does not exist   
+    else:
+        # file does not exist
         print("Let's start by creating your configuration file. We will ask you a couple of questions!")
-        createConfigFile(configFileName)
+        createConfigFile(configFileName, grafana)
         print('\n')
 
     # Read config file
