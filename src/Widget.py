@@ -30,7 +30,7 @@ class Widget:
             limit = None
             if self.panelType == 'graph':
                 self.visualisation = "viz.line"
-            elif self.panelType == 'singlestat':
+            elif self.panelType == 'singlestat' or self.panelType == 'stat':
                 self.visualisation = "viz.billboard"
                 range = False
             elif self.panelType == 'gauge':
