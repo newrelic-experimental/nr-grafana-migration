@@ -10,11 +10,11 @@ class NewRelic:
     def __init__(self, config):
 
         self.config = config
-        self.userKey = config['api']['userKey'] 
-        self.accountId = config['api']['accountId'] 
-        
+        self.userKey = config['api']['userKey']
+        self.accountId = config['api']['accountId']
+
         self.createOutputDir()
-    
+
     def createOutputDir(self):
         # Create output directory if it doesn't exist
         if not os.path.exists(constants.OUTPUT_DIR):
@@ -28,7 +28,7 @@ class NewRelic:
         # Read file
         with open(grafanaDashboard, 'r') as f:
             data = json.load(f)
-        
+
         # Conversion service
         variables = Dashboard.getVariables(data)
         promQL2NrqlService = PromQL2NrqlService(self.config, variables)
@@ -41,7 +41,7 @@ class NewRelic:
         output = json.dumps(dashboard.toJSON(), indent=4, sort_keys=True)
 
         # Write out file
-        filePath = f"{constants.NEWRELIC_OUTPUT_DIR}/newrelic-%s" % os.path.basename(grafanaDashboard) 
+        filePath = f"{constants.NEWRELIC_OUTPUT_DIR}/newrelic-%s" % os.path.basename(grafanaDashboard)
         f = open(filePath, "w")
         f.write(output)
         f.close()
@@ -71,3 +71,12 @@ class NewRelic:
         # Synchronous request
         data = client.execute(query=query, variables=variables)
         print(json.dumps(data, indent = 3))
+
+    def getPolicies(self):
+        print("getting policies")
+
+    def createPolicy(self):
+        print("creating policy")
+
+    def importAlert(self, file):
+        print("importing %s" % file)

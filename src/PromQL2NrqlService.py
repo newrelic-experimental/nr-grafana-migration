@@ -6,7 +6,7 @@ import re
 
 class PromQL2NrqlService:
 
-    def __init__(self, config, variables):
+    def __init__(self, config, variables = []):
 
         self.accountId = config['api']['accountId']
         self.grafanaVariables = variables
@@ -17,7 +17,7 @@ class PromQL2NrqlService:
         # Login to New Relic
         self.session = requests.Session()
         self.authenticate(config, self.session)
-    
+
     def loadCache(self):
         try:
             f = open(constants.CACHE_FILE_NAME, "r")
@@ -60,7 +60,7 @@ class PromQL2NrqlService:
                 'response': lambda r, *args, **kwargs: r.raise_for_status()
             }
         if configuration['auth']['ssoEnabled']:
-            browser = configuration['auth']['sso']['browserCookie'] 
+            browser = configuration['auth']['sso']['browserCookie']
             if browser == 'Chrome':
                 cookies = browser_cookie3.chrome(domain_name='.newrelic.com')
             elif browser == 'Opera':
@@ -69,7 +69,7 @@ class PromQL2NrqlService:
                 cookies = browser_cookie3.firefox(domain_name='.newrelic.com')
             elif browser == 'Edge':
                 cookies = browser_cookie3.edge(domain_name='.newrelic.com')
-            
+
             for cookie in cookies:
                 if cookie.domain == '.newrelic.com':  # remove .blog.newreli.com and other domains
                     self.session.cookies[cookie.name] = cookie.value
@@ -79,14 +79,14 @@ class PromQL2NrqlService:
                 "login[password]": configuration['auth']['nonSso']['password']
             }
             self.session.post(constants.LOGIN_URL, data = login_data)
-    
+
     def removeVariables(self,matchedObj):
         newDimensions = []
         for dimension in matchedObj[0].split(','):
             if not any(variable in dimension for variable in self.grafanaVariables):
                 newDimensions.append(dimension)
         return ",".join(newDimensions)
-    
+
     @staticmethod
     def removeDimensions(nrqlQuery):
         pattern = re.compile(" facet dimensions\(\)", re.IGNORECASE)
