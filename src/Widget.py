@@ -11,7 +11,7 @@ class Widget:
 
         # Coordinate conversion
         # Grafana has 24 column dashboards and New Relic has 12
-        # We now devide by two and floor, but this will cause problems so a more complicate conversion method is needed
+        # We now divide by two and floor, but this will cause problems so a more complicate conversion method is needed
         # One height in New Relic = 3 heights in Grafana (Visually estimated)
         self.gridPosX = widget['gridPos']['x']
         self.gridPosY = widget['gridPos']['y']
