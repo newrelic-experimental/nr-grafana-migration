@@ -30,7 +30,7 @@ def createConfigFile(ConfigFileName):
     questionary.print("Let's get some information about New Relic (destination) 🔑", style="bold italic fg:darkred")
     ssoEnabled = questionary.confirm("Do you use SSO to login to New Relic?").ask()
     if ssoEnabled:
-        questionary.text("Please open your Browser and make sure you are logged in to New Rewlic (do NOT use private window). Hit enter after completing this step").ask()
+        questionary.text("Please open your Browser and make sure you are logged in to New Relic (do NOT use private window). Hit enter after completing this step").ask()
         browserCookie = questionary.select("What do you want to do?", choices=["Chrome","Opera","FireFox","Edge"]).ask()
         config['auth']['sso']['browserCookie'] = browserCookie
     else:

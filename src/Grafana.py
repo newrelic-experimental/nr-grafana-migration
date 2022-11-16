@@ -13,7 +13,7 @@ class Grafana:
         self.createOutputDir()
         self.dahboardsPaths = []
 
-        # Initiase Grafana API
+        # Initialize Grafana API
         print("Connecting to Grafana API")
         self.grafana_api = GrafanaFace(auth=self.apiKey, host=self.host, protocol='https')
     
