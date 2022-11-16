@@ -73,7 +73,7 @@ class Grafana:
         for dashboard in dashboardData:
             content = self.grafana_api.dashboard.get_dashboard(dashboard['uid'])
             dashboardPath = f'{constants.GRAFANA_OUTPUT_DIR}/%s-%s.json' % (dashboard['uid'], dashboard['uri'].replace('db/', ''))
-            self.dahboardsPaths.append(dashboardPath)
+            self.dashboardsPaths.append(dashboardPath)
             # Write dashboard json to output directory
             with open(dashboardPath, 'w') as f:
                 f.write(json.dumps(content, indent=4, sort_keys=True))
