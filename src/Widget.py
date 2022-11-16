@@ -46,6 +46,12 @@ class Widget:
                 if 'options' in widget and 'fieldOptions' in widget['options'] and 'defaults' in widget['options']['fieldOptions'] and 'max' in widget['options']['fieldOptions']['defaults']:
                     limit = widget['options']['fieldOptions']['defaults']['max']
 
+            # We don't know how to convert these so just remove them
+            if 'cards' in widget:
+                del widget['cards']
+            if 'datasource' in widget:
+                del widget['datasource']
+
             elif self.panelType == 'table':
                 self.visualisation = "viz.table"
             elif self.panelType == 'text':

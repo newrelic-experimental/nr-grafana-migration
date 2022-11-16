@@ -11,7 +11,7 @@ class Grafana:
         self.apiKey = config['grafana']['apiKey']
         self.host = config['grafana']['host']
         self.createOutputDir()
-        self.dahboardsPaths = []
+        self.dashboardsPaths = []
 
         # Initialize Grafana API
         print("Connecting to Grafana API")
@@ -33,13 +33,15 @@ class Grafana:
         dashboardHeaders = ['id', 'title', 'tags', 'isStarred', 'url']
 
         print('\n')
-        dashboards = questionary.checkbox('Select the Grafana Dashboards you woul like to migrate (based on dashboards URLs):', choices=[elem['url'] for elem in dashboardData]).ask()
+        dashboards = questionary.checkbox(
+            'Select the Grafana Dashboards you would like to migrate (based on dashboards URLs):',
+            choices=[elem['url'] for elem in dashboardData]).ask()
         # Keep only selected dashboards
         dashboardData = [elem for elem in dashboardData if elem['url'] in dashboards]
         
         self.saveToOutput(dashboardData, dashboardHeaders)
-        return self.dahboardsPaths
-        
+        return self.dashboardsPaths
+
     def saveToOutput(self, dashboardData, dashboardHeaders):
         dashboardList = []
         for dashboard in dashboardData:
