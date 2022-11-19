@@ -1,5 +1,5 @@
 from src.config.config import config
-from src.utils.utils import banner
+from src.utils.utils import bannerDashboards
 from src.Grafana import Grafana
 from src.NewRelic import NewRelic
 
@@ -7,9 +7,9 @@ from src.NewRelic import NewRelic
 ######                             main                               #######
 #############################################################################
 
-banner()
+bannerDashboards()
 
-config = config()
+config = config(grafana=True)
 
 # Grafana
 grafana = Grafana(config)

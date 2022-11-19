@@ -11,7 +11,7 @@
 
 ## Getting Started
 
-`python3 main.py`
+`python3 grafana.py`
 
 ## Usage
 
