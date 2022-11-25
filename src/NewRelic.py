@@ -28,7 +28,12 @@ class NewRelic:
         # Read file
         with open(grafanaDashboard, 'r') as f:
             data = json.load(f)
-        
+
+        # Some dashboards we get may not be wrapped in parent "dashboard" json
+        # We will convert those to the schema we expect
+        if 'dashboard' not in data:
+            data = {"dashboard": data}
+
         # Conversion service
         variables = Dashboard.getVariables(data)
         promQL2NrqlService = PromQL2NrqlService(self.config, variables)

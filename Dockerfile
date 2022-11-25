@@ -10,7 +10,7 @@ COPY requirements.txt  .
 RUN  pip3 install -r requirements.txt
 
 # Copy function code
-COPY main.py /app/
+COPY *.py /app/
 COPY src/ /app/src
 
 

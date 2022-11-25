@@ -15,7 +15,7 @@ class Dashboard:
         self.parsePanels(json['dashboard']['panels'])
 
 
-    # For collapse = true , you have to put rows panels inside the row definition , in panels[ ] section.
+    # For collapse = true, you have to put rows panels inside the row definition , in panels[ ] section.
     # For collapse = false, you have to put rows panels below the row definition.
     def parsePanels(self, panels):
         page = Page(conversionService=self.conversionService, widgets=[])

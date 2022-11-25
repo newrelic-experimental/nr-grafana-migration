@@ -85,6 +85,6 @@ dashboards = os.listdir('output/dashboards')
 for file in dashboards:
 	parse(file)
 
-# Outpust errors to json
+# Output errors to json
 with open('query-errors.json', 'w') as f:
     f.write(json.dumps(errors, indent=4, sort_keys=True))

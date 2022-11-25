@@ -48,9 +48,15 @@ class PromQL2NrqlService:
                 "endTime": "null",
                 "step": 30
             })
-            # Remove `Facet Dimensions()`
-            newNrql = self.removeDimensions(nrql.json()['nrql'])
-            self.cache[promql] = newNrql
+
+            if nrql.status_code == 200:
+                # Remove `Facet Dimensions()`
+                newNrql = self.removeDimensions(nrql.json()['nrql'])
+                self.cache[promql] = newNrql
+            else:
+                # Print the error to console
+                print('{}:\n    {}'.format(nrql.json()['message'], promql))
+                self.cache[promql] = promql
 
         return self.cache[promql]
 
