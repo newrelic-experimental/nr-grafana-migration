@@ -4,28 +4,33 @@ from pathlib import Path
 from src.utils.utils import isNumber
 import src.utils.constants as constants
 
-def createConfigFile(ConfigFileName):
-    config = {
+
+def defaultConfig():
+    return {
         "auth": {
             "ssoEnabled": False,
-            "sso":{
-                "browserCookie":"",
+            "sso": {
+                "browserCookie": "",
             },
-            "nonSso":{
+            "nonSso": {
                 "username": "",
                 "password": "",
             }
         },
         "api": {
             "userKey": "",
-            "accountId":""
+            "accountId": ""
         },
         "grafana": {
             "apiKey": "",
             "host": ""
         }
     }
-    
+
+
+def createConfigFile(ConfigFileName):
+    config = defaultConfig()
+
     print("")
     questionary.print("Let's get some information about New Relic (destination) 🔑", style="bold italic fg:darkred")
     ssoEnabled = questionary.confirm("Do you use SSO to login to New Relic?").ask()
