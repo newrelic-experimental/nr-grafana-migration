@@ -15,7 +15,8 @@ class Crossplane:
 
         for pages in data['pages']:
             for widget in pages['widgets']:
-                del widget['id']
+                if 'id' in widget:
+                    del widget['id']
                 if 'text' in widget['rawConfiguration']:
                     widget["visualization"]['id'] = "viz.markdown"
                 else:
