@@ -26,10 +26,10 @@ for opt, arg in options:
         token = os.getenv('NEW_RELIC_API_TOKEN')
         accountId = os.getenv('NEW_RELIC_ACCOUNT_ID')
         localConfig = defaultConfig()
-        config['api']['userKey'] = token
-        config['api']['accountId'] = accountId
+        localConfig['api']['userKey'] = token
+        localConfig['api']['accountId'] = accountId
         # New Relic
-        newRelic = NewRelic(config)
+        newRelic = NewRelic(localConfig)
         # Process the dashboard files on disk
         grafanaDashboardsFiles = glob.glob(os.path.join(constants.GRAFANA_OUTPUT_DIR, "*.json"))
         for file in grafanaDashboardsFiles:
