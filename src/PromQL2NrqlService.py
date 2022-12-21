@@ -2,7 +2,9 @@ import requests
 import json
 import src.utils.constants as constants
 import browser_cookie3
+import os
 import re
+
 
 class PromQL2NrqlService:
 
@@ -15,9 +17,15 @@ class PromQL2NrqlService:
         self.cache = self.loadCache()
 
         # Login to New Relic
+        # Use an API key if provided, else get a new session
+        token = os.getenv('NEW_RELIC_API_TOKEN')
         self.session = requests.Session()
-        self.authenticate(config, self.session)
-    
+        if token:
+            self.token = token
+        else:
+            self.authenticate(config, self.session)
+
+
     def loadCache(self):
         try:
             f = open(constants.CACHE_FILE_NAME, "r")
@@ -38,6 +46,9 @@ class PromQL2NrqlService:
             "X-Requested-With": "XMLHttpRequest",
             "Accept": "application/json"
         }
+        if self.token:
+            custom_headers['Api-Key'] = self.token
+
         promql = re.sub(r'(?<=\{)(.*?)(?=\})', self.removeVariables, query)
         if promql not in self.cache:
             nrql = self.session.post(constants.PROMQL_TRANSLATE_URL, headers=custom_headers, json={
