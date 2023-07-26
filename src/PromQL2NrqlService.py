@@ -23,6 +23,7 @@ class PromQL2NrqlService:
         if token:
             self.token = token
         else:
+            self.token = None
             self.authenticate(config, self.session)
 
 
@@ -72,10 +73,9 @@ class PromQL2NrqlService:
         return self.cache[promql]
 
     def authenticate(self,configuration, session):
-
         self.session.hooks = {
-                'response': lambda r, *args, **kwargs: r.raise_for_status()
-            }
+            'response': lambda r, *args, **kwargs: r.raise_for_status()
+        }
         if configuration['auth']['ssoEnabled']:
             browser = configuration['auth']['sso']['browserCookie'] 
             if browser == 'Chrome':
