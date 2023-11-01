@@ -28,9 +28,9 @@ class Widget:
             # Detect visualisation
             range = True
             limit = None
-            if self.panelType == 'graph':
+            if self.panelType == 'graph' or self.panelType == 'timeseries':
                 self.visualisation = "viz.line"
-            elif self.panelType == 'singlestat' or self.panelType == 'stat':
+            elif self.panelType == 'singlestat' or self.panelType == 'stat' or self.panelType == 'bargauge':
                 self.visualisation = "viz.billboard"
                 range = False
             elif self.panelType == 'gauge':
@@ -45,20 +45,20 @@ class Widget:
 
                 if 'options' in widget and 'fieldOptions' in widget['options'] and 'defaults' in widget['options']['fieldOptions'] and 'max' in widget['options']['fieldOptions']['defaults']:
                     limit = widget['options']['fieldOptions']['defaults']['max']
+            elif self.panelType == 'table':
+                self.visualisation = "viz.table"
+            elif self.panelType == 'text':
+                self.visualisation = "viz.markdown"
+
+            if self.visualisation is None:
+                # No idea what to do with this
+                raise Exception('Unknown type {}'.format(widget))
 
             # We don't know how to convert these so just remove them
             if 'cards' in widget:
                 del widget['cards']
             if 'datasource' in widget:
                 del widget['datasource']
-
-            elif self.panelType == 'table':
-                self.visualisation = "viz.table"
-            elif self.panelType == 'text':
-                self.visualisation = "viz.markdown"
-            else:
-                # No idea what to do with this
-                raise Exception('Unknown type {}'.format(widget))
 
             # Parse queries
             self.rawConfiguration = {}
