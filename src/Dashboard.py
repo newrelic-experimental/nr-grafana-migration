@@ -2,11 +2,15 @@ from src.Page import Page
 
 class Dashboard:
 
-    def __init__(self, conversionService, json):
+    def __init__(self, conversionService, json, account_id):
         self.conversionService = conversionService
+        self.account_id = account_id
         self.name = ''
         self.description = ''
         self.pages = []
+        self.variables = self.getVariables(json)
+        self.conversionService.setVariables(self.variables)
+        self.setVariableQueries()
 
         self.parseGrafana(json)
 
@@ -58,13 +62,30 @@ class Dashboard:
             "description": self.description,
             "permissions": "PUBLIC_READ_WRITE",
             "pages": list(map(lambda page: page.toJSON(), self.pages)),
+            "variables": self.variables
         }
     
-    @staticmethod
-    def getVariables(json):
+    def getVariables(self, json):
         variables = list()
         if 'templating' in json['dashboard'] and 'list' in json['dashboard']['templating']:
             variablesList = json['dashboard']['templating']['list']
             for variableObj in variablesList:
-                variables.append(f'${variableObj["name"]}')
+                variable = {
+                    "name": variableObj["name"],
+                    "title": variableObj["label"],
+                    # "defaultValues": '',
+                    "nrqlQuery": {
+                        "accountIds": [self.account_id],
+                        "query": variableObj["query"]["query"],
+                    },
+                    "isMultiSelection": variableObj["multi"],
+                    "type": "NRQL",
+                    "replacementStrategy": "STRING"
+                }
+
+                variables.append(variable)
         return variables
+
+    def setVariableQueries(self):
+        for variable in self.variables:
+            variable["nrqlQuery"]["query"] = self.conversionService.convertQuery(variable["nrqlQuery"]["query"])

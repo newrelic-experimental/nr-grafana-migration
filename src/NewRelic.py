@@ -35,12 +35,11 @@ class NewRelic:
             data = {"dashboard": data}
 
         # Conversion service
-        variables = Dashboard.getVariables(data)
-        promQL2NrqlService = PromQL2NrqlService(self.config, variables)
+        promQL2NrqlService = PromQL2NrqlService(self.config)
 
         # Create and parse dashboard
         print(f"Starting Conversion: {grafanaDashboard}")
-        dashboard = Dashboard(promQL2NrqlService, data)
+        dashboard = Dashboard(promQL2NrqlService, data, self.config['api']['accountId'])
 
         # Create pretty json
         output = json.dumps(dashboard.toJSON(), indent=4, sort_keys=True)

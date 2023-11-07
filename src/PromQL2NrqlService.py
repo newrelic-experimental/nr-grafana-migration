@@ -8,10 +8,9 @@ import re
 
 class PromQL2NrqlService:
 
-    def __init__(self, config, variables):
+    def __init__(self, config):
 
         self.accountId = config['api']['accountId']
-        self.grafanaVariables = variables
 
         # Create local cache to store queries, this will speed up testing
         self.cache = self.loadCache()
@@ -26,6 +25,8 @@ class PromQL2NrqlService:
             self.token = None
             self.authenticate(config, self.session)
 
+        self.grafanaVariables = None
+
 
     def loadCache(self):
         try:
@@ -35,6 +36,9 @@ class PromQL2NrqlService:
             content = {}
 
         return content
+
+    def setVariables(self, variables):
+        self.grafanaVariables = variables
 
     def saveCache(self):
         data = json.dumps(self.cache)
@@ -50,25 +54,27 @@ class PromQL2NrqlService:
         if self.token:
             custom_headers['Api-Key'] = self.token
 
-        promql = re.sub(r'(?<=\{)(.*?)(?=\})', self.removeVariables, query)
-        if promql not in self.cache:
-            nrql = self.session.post(constants.PROMQL_TRANSLATE_URL, headers=custom_headers, json={
-                "promql": promql,
-                "account_id": self.accountId,
-                "isRange": range,
-                "startTime": "null",
-                "endTime": "null",
-                "step": 30
-            })
+        promql = query
 
-            if nrql.status_code == 200:
-                # Remove `Facet Dimensions()`
-                newNrql = self.removeDimensions(nrql.json()['nrql'])
-                self.cache[promql] = newNrql
-            else:
-                # Print the error to console
-                print('{}:\n    {}'.format(nrql.json()['message'], promql))
-                self.cache[promql] = promql
+        # if promql not in self.cache:
+        nrql = self.session.post(constants.PROMQL_TRANSLATE_URL, headers=custom_headers, json={
+            "promql": query,
+            "account_id": self.accountId,
+            "isRange": range,
+            "startTime": "null",
+            "endTime": "null",
+            "step": 30
+        })
+
+        if nrql.status_code == 200:
+            # Remove `Facet Dimensions()`
+            newNrql = self.removeDimensions(nrql.json()['nrql'])
+            newNrql = self.replaceGrafanaVariables(newNrql)
+            self.cache[promql] = newNrql
+        else:
+            # Print the error to console
+            print('{}:\n    {}'.format(nrql.json()['message'], promql))
+            self.cache[promql] = promql
 
         return self.cache[promql]
 
@@ -97,12 +103,13 @@ class PromQL2NrqlService:
             }
             self.session.post(constants.LOGIN_URL, data = login_data)
     
-    def removeVariables(self,matchedObj):
-        newDimensions = []
-        for dimension in matchedObj[0].split(','):
-            if not any(variable in dimension for variable in self.grafanaVariables):
-                newDimensions.append(dimension)
-        return ",".join(newDimensions)
+    def replaceGrafanaVariables(self,nrqlQuery):
+        new_nrql_query = nrqlQuery
+        for variable in self.grafanaVariables:
+            variable_name = variable['name']
+            new_nrql_query = new_nrql_query.replace('\'$' + variable_name + '\'', '{{' + variable_name + '}}')
+
+        return new_nrql_query
     
     @staticmethod
     def removeDimensions(nrqlQuery):
