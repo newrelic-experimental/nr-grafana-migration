@@ -73,7 +73,6 @@ class Dashboard:
                 variable = {
                     "name": variableObj["name"],
                     "title": variableObj["label"],
-                    # "defaultValues": '',
                     "nrqlQuery": {
                         "accountIds": [self.account_id],
                         "query": variableObj["query"]["query"],
