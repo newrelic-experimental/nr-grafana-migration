@@ -54,11 +54,13 @@ class PromQL2NrqlService:
         if self.token:
             custom_headers['Api-Key'] = self.token
 
-        promql = query
+        promql = self.cleanupQuery(query)
+
+        print(promql)
 
         # if promql not in self.cache:
         nrql = self.session.post(constants.PROMQL_TRANSLATE_URL, headers=custom_headers, json={
-            "promql": query,
+            "promql": promql,
             "account_id": self.accountId,
             "isRange": range,
             "startTime": "null",
@@ -110,7 +112,24 @@ class PromQL2NrqlService:
             new_nrql_query = new_nrql_query.replace('\'$' + variable_name + '\'', '{{' + variable_name + '}}')
 
         return new_nrql_query
-    
+
+    def cleanupQuery(self, nrqlQuery):
+        new_nrql_query = nrqlQuery
+
+        new_nrql_query = new_nrql_query.replace("$__rate_interval", "1m")
+        new_nrql_query = new_nrql_query.replace("$__range", "1m")
+        new_nrql_query = new_nrql_query.replace("${__range_s}", "60")
+
+        new_nrql_query = new_nrql_query.replace("\r\n", "")
+
+        # label_replace and sort is not currently supported
+        if "label_replace" in new_nrql_query:
+            new_nrql_query = "label_replace is not currently supported"
+        if "sort_desc" in new_nrql_query:
+            new_nrql_query = "sort is not currently supported"
+
+        return new_nrql_query
+
     @staticmethod
     def removeDimensions(nrqlQuery):
         pattern = re.compile(" facet dimensions\(\)", re.IGNORECASE)

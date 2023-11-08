@@ -70,19 +70,27 @@ class Dashboard:
         if 'templating' in json['dashboard'] and 'list' in json['dashboard']['templating']:
             variablesList = json['dashboard']['templating']['list']
             for variableObj in variablesList:
-                variable = {
-                    "name": variableObj["name"],
-                    "title": variableObj["label"],
-                    "nrqlQuery": {
-                        "accountIds": [self.account_id],
-                        "query": variableObj["query"]["query"],
-                    },
-                    "isMultiSelection": variableObj["multi"],
-                    "type": "NRQL",
-                    "replacementStrategy": "STRING"
-                }
 
-                variables.append(variable)
+                # get multi select option from grafana
+                allow_multi_select = False
+                if "multi" in variableObj:
+                    allow_multi_select = variableObj["multi"]
+
+                if variableObj["type"] == "query":
+                    variable = {
+                        "name": variableObj["name"],
+                        "title": variableObj["label"],
+                        "nrqlQuery": {
+                            "accountIds": [self.account_id],
+                            "query": variableObj["query"]["query"],
+                        },
+                        "isMultiSelection": allow_multi_select,
+                        "type": "NRQL",
+                        "replacementStrategy": "STRING"
+                    }
+
+                    variables.append(variable)
+
         return variables
 
     def setVariableQueries(self):
