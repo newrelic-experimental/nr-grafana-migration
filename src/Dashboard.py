@@ -1,5 +1,6 @@
 from src.Page import Page
 
+
 class Dashboard:
 
     def __init__(self, conversionService, json, account_id):
@@ -17,7 +18,6 @@ class Dashboard:
     def parseGrafana(self, json):
         self.name = json['dashboard']['title']
         self.parsePanels(json['dashboard']['panels'])
-
 
     # For collapse = true, you have to put rows panels inside the row definition , in panels[ ] section.
     # For collapse = false, you have to put rows panels below the row definition.
@@ -53,8 +53,8 @@ class Dashboard:
                 self.pages[-1].addWidgets(page.widgets)
             ## in case no rows in the grafana dashboard
             else:
-                self.pages.append(Page(conversionService=self.conversionService, name=self.name, description='', widgets=page.widgets))
-
+                self.pages.append(Page(conversionService=self.conversionService, name=self.name, description='',
+                                       widgets=page.widgets))
 
     def toJSON(self):
         return {
@@ -64,7 +64,7 @@ class Dashboard:
             "pages": list(map(lambda page: page.toJSON(), self.pages)),
             "variables": self.variables
         }
-    
+
     def getVariables(self, json):
         variables = list()
         if 'templating' in json['dashboard'] and 'list' in json['dashboard']['templating']:
@@ -74,7 +74,10 @@ class Dashboard:
                 # get multi select option from grafana
                 allow_multi_select = False
                 if "multi" in variableObj:
-                    allow_multi_select = variableObj["multi"]
+                    if "includeAll" in variableObj and variableObj["includeAll"] is True:
+                        allow_multi_select = True
+                    else:
+                        allow_multi_select = variableObj["multi"]
 
                 if variableObj["type"] == "query":
                     variable = {
@@ -91,8 +94,53 @@ class Dashboard:
 
                     variables.append(variable)
 
+                if variableObj["type"] == "custom" or variableObj["type"] == "constant":
+                    print(variableObj["name"])
+                    items, default_values = self.getCustomValues(variableObj, allow_multi_select)
+                    variable = {
+                        "name": variableObj["name"],
+                        "title": variableObj["label"],
+                        "items": items,
+                        "defaultValues": default_values,
+                        "isMultiSelection": allow_multi_select,
+                        "type": "ENUM",
+                        "replacementStrategy": "STRING"
+                    }
+
+                    variables.append(variable)
+
         return variables
+
+    def getCustomValues(self, variable, allow_multi_select):
+        items = list()
+        default_values = list()
+
+        custom_value = variable["query"].split(",")
+
+        for custom_value in custom_value:
+            item = {
+                "value": custom_value
+            }
+            items.append(item)
+
+            default_value = {
+                "value": {
+                    "string": custom_value
+                }
+            }
+            default_values.append(default_value)
+
+        if allow_multi_select is True:
+            default_value = {
+                "value": {
+                    "string": "*"
+                }
+            }
+            default_values.append(default_value)
+
+        return items, default_values
 
     def setVariableQueries(self):
         for variable in self.variables:
-            variable["nrqlQuery"]["query"] = self.conversionService.convertQuery(variable["nrqlQuery"]["query"])
+            if variable["type"] == "NRQL":
+                variable["nrqlQuery"]["query"] = self.conversionService.convertQuery(variable["nrqlQuery"]["query"])
