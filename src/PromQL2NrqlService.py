@@ -56,8 +56,6 @@ class PromQL2NrqlService:
 
         promql = self.cleanupQuery(query)
 
-        print(promql)
-
         # if promql not in self.cache:
         nrql = self.session.post(constants.PROMQL_TRANSLATE_URL, headers=custom_headers, json={
             "promql": promql,
