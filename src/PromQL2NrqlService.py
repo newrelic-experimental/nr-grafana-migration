@@ -18,7 +18,7 @@ class PromQL2NrqlService:
 
         # Login to New Relic
         # Use an API key if provided, else get a new session
-        token = os.getenv('NEW_RELIC_API_TOKEN')
+        token = os.getenv('NEW_RELIC_API_TOKEN', config["api"].get("userKey"))
         self.session = requests.Session()
         if token:
             self.token = token
@@ -66,9 +66,17 @@ class PromQL2NrqlService:
                 newNrql = self.removeDimensions(nrql.json()['nrql'])
                 self.cache[promql] = newNrql
             else:
+                api_error_message = nrql.json()['message']
                 # Print the error to console
-                print('{}:\n    {}'.format(nrql.json()['message'], promql))
-                self.cache[promql] = promql
+                conversion_error_message = '{}:\n    {}'.format(api_error_message, promql)
+                print(conversion_error_message)
+                # HACK: insert a 3m range vector in the first "reasonable" spot if we get NRQL error for it.
+                if "must have a range vector as its argument" in api_error_message and not "[3m]" in api_error_message:
+                    hacked_promql = promql.replace(")", "[3m])", 1)
+                    if hacked_promql != promql:
+                        return self.convertQuery(hacked_promql, range, clean)
+                conversion_error_message = f"Unable to convert {promql}: {api_error_message}"
+                raise Exception(conversion_error_message)
 
         return self.cache[promql]
 

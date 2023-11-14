@@ -14,3 +14,5 @@ config.json
 
 # Query cache file
 cache.json
+
+.venv

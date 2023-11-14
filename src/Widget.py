@@ -6,7 +6,7 @@ class Widget:
     def __init__(self, conversionService, widget):
         self.conversionService = conversionService
         self.id = widget['id']
-        self.title = widget['title']
+        self.title = widget.get('title', '')
         self.panelType = widget['type']
 
         # Coordinate conversion
@@ -45,10 +45,16 @@ class Widget:
 
                 if 'options' in widget and 'fieldOptions' in widget['options'] and 'defaults' in widget['options']['fieldOptions'] and 'max' in widget['options']['fieldOptions']['defaults']:
                     limit = widget['options']['fieldOptions']['defaults']['max']
+
+                # HACK: insert arbitrary value for required "limit" field.
+                # Grafana has an option to detect a maximum value.
+                limit = limit if limit else 1000
             elif self.panelType == 'table':
                 self.visualisation = "viz.table"
             elif self.panelType == 'text':
                 self.visualisation = "viz.markdown"
+            elif self.panelType == 'piechart':
+                self.visualisation = 'viz.pie'
 
             if self.visualisation is None:
                 # No idea what to do with this

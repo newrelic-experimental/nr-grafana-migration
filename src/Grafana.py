@@ -15,7 +15,7 @@ class Grafana:
 
         # Initialize Grafana API
         print("Connecting to Grafana API")
-        self.grafana_api = GrafanaFace(auth=self.apiKey, host=self.host, protocol='https')
+        self.grafana_api = GrafanaFace(auth=self.apiKey, host=self.host, protocol='https', timeout=20.0)
     
     def createOutputDir(self):
         # Create output directory if it doesn't exist
